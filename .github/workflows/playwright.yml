@@ -1,4 +1,4 @@
-name: Playwright Tests
+ name: Playwright Tests
 
 on:
   push:
@@ -29,18 +29,19 @@ jobs:
         working-directory: tests
         run: npx playwright install --with-deps
 
-      - name: Serve demo_login
-        run: |
-          pipx install httpserver || true
-          python -m http.server 3000 -d demo_login &
-        shell: bash
-
       - name: Run Playwright tests
         working-directory: tests
         env:
           BASE_URL: http://localhost:3000
           PLAYWRIGHT_BASE_URL: http://localhost:3000
-        run: npm test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 3000 -d ../demo_login &
+          SERVER_PID=$!
+          trap "kill $SERVER_PID" EXIT
+          npx wait-on http://localhost:3000/login.html
+          npm test
 
       - name: Upload Playwright HTML report
         if: always()
