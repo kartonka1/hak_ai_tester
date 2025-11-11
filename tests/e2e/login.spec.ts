@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 test('login smoke (demo on BASE_URL)', async ({ page }) => {
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
+  await page.goto(`${BASE_URL}/login.html`, { waitUntil: 'load' });
 
   await page.getByLabel('Email').fill('user@example.com');
   await page.getByLabel('Пароль').fill('Passw0rd!');
@@ -17,7 +17,7 @@ test('login smoke (demo on BASE_URL)', async ({ page }) => {
 });
 
 test('login negative: empty email shows validation error', async ({ page }) => {
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
+  await page.goto(`${BASE_URL}/login.html`, { waitUntil: 'load' });
 
   await page.getByLabel('Email').fill('');
   await page.getByLabel('Пароль').fill('Passw0rd!');
@@ -28,7 +28,7 @@ test('login negative: empty email shows validation error', async ({ page }) => {
 });
 
 test('login negative: empty password shows validation error', async ({ page }) => {
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
+  await page.goto(`${BASE_URL}/login.html`, { waitUntil: 'load' });
 
   await page.getByLabel('Email').fill('user@example.com');
   await page.getByLabel('Пароль').fill('');
@@ -39,7 +39,7 @@ test('login negative: empty password shows validation error', async ({ page }) =
 });
 
 test('login negative: both fields empty prioritizes email error', async ({ page }) => {
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
+  await page.goto(`${BASE_URL}/login.html`, { waitUntil: 'load' });
 
   await page.getByLabel('Email').fill('');
   await page.getByLabel('Пароль').fill('');
@@ -50,7 +50,7 @@ test('login negative: both fields empty prioritizes email error', async ({ page 
 });
 
 test('login negative: invalid email format shows specific error', async ({ page }) => {
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
+  await page.goto(`${BASE_URL}/login.html`, { waitUntil: 'load' });
 
   await page.getByLabel('Email').fill('not-an-email');
   await page.getByLabel('Пароль').fill('Passw0rd!');
@@ -61,7 +61,7 @@ test('login negative: invalid email format shows specific error', async ({ page 
 });
 
 test('login negative: wrong credentials show auth error', async ({ page }) => {
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'load' });
+  await page.goto(`${BASE_URL}/login.html`, { waitUntil: 'load' });
 
   await page.getByLabel('Email').fill('user@example.com');
   await page.getByLabel('Пароль').fill('WrongPass123');
