@@ -3,129 +3,827 @@
 <head>
 	<meta charset="utf-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1"/>
-	<title>AI Test Assistant</title>
+	<title>🔒 AI Security Test Assistant</title>
 	<style>
-		body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 20px; }
-		textarea { width: 100%; height: 140px; }
-		pre { background: #f6f8fa; padding: 12px; overflow: auto; }
-		code { white-space: pre-wrap; }
-		.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-		button { padding: 8px 12px; }
+		@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+		
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+		
+		body {
+			font-family: 'Share Tech Mono', 'Courier New', monospace;
+			background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #16213e 100%);
+			color: #00ff88;
+			min-height: 100vh;
+			padding: 20px;
+			position: relative;
+			overflow-x: hidden;
+		}
+		
+		body::before {
+			content: '';
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: 
+				radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+				radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
+				radial-gradient(circle at 40% 20%, rgba(0, 191, 255, 0.1) 0%, transparent 50%);
+			pointer-events: none;
+			z-index: 0;
+		}
+		
+		.container {
+			max-width: 1400px;
+			margin: 0 auto;
+			position: relative;
+			z-index: 1;
+		}
+		
+		header {
+			text-align: center;
+			margin-bottom: 40px;
+			padding: 30px;
+			background: rgba(0, 0, 0, 0.5);
+			border: 2px solid #00ff88;
+			border-radius: 10px;
+			box-shadow: 0 0 30px rgba(0, 255, 136, 0.3), inset 0 0 30px rgba(0, 255, 136, 0.1);
+			position: relative;
+			overflow: hidden;
+		}
+		
+		header::before {
+			content: '🔒';
+			position: absolute;
+			top: 10px;
+			left: 20px;
+			font-size: 2em;
+			animation: pulse 2s infinite;
+		}
+		
+		header::after {
+			content: '🛡️';
+			position: absolute;
+			top: 10px;
+			right: 20px;
+			font-size: 2em;
+			animation: pulse 2s infinite 1s;
+		}
+		
+		@keyframes pulse {
+			0%, 100% { opacity: 1; transform: scale(1); }
+			50% { opacity: 0.7; transform: scale(1.1); }
+		}
+		
+		h1 {
+			font-family: 'Orbitron', sans-serif;
+			font-size: 2.5em;
+			font-weight: 900;
+			background: linear-gradient(90deg, #00ff88, #00d4ff, #8a2be2);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
+			text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+			margin-bottom: 10px;
+			letter-spacing: 3px;
+		}
+		
+		.subtitle {
+			color: #00d4ff;
+			font-size: 1.1em;
+			letter-spacing: 2px;
+		}
+		
+		section {
+			background: rgba(0, 0, 0, 0.6);
+			border: 1px solid #00ff88;
+			border-radius: 8px;
+			padding: 25px;
+			margin-bottom: 30px;
+			box-shadow: 0 0 20px rgba(0, 255, 136, 0.2), inset 0 0 20px rgba(0, 255, 136, 0.05);
+			position: relative;
+		}
+		
+		section::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 3px;
+			background: linear-gradient(90deg, transparent, #00ff88, transparent);
+			animation: scan 3s linear infinite;
+		}
+		
+		@keyframes scan {
+			0% { transform: translateX(-100%); }
+			100% { transform: translateX(100%); }
+		}
+		
+		h2, h3 {
+			font-family: 'Orbitron', sans-serif;
+			color: #00d4ff;
+			margin-bottom: 20px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 2px;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+		
+		h2::before, h3::before {
+			content: '▶';
+			color: #00ff88;
+			font-size: 0.8em;
+		}
+		
+		label {
+			display: block;
+			color: #00d4ff;
+			margin-bottom: 8px;
+			font-weight: bold;
+			text-transform: uppercase;
+			font-size: 0.9em;
+			letter-spacing: 1px;
+		}
+		
+		input, textarea, select {
+			width: 100%;
+			padding: 12px;
+			background: rgba(0, 0, 0, 0.7);
+			border: 2px solid #00ff88;
+			border-radius: 5px;
+			color: #00ff88;
+			font-family: 'Share Tech Mono', monospace;
+			font-size: 14px;
+			margin-bottom: 15px;
+			transition: all 0.3s;
+		}
+		
+		input:focus, textarea:focus, select:focus {
+			outline: none;
+			border-color: #00d4ff;
+			box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+			background: rgba(0, 0, 0, 0.9);
+		}
+		
+		textarea {
+			resize: vertical;
+			min-height: 120px;
+		}
+		
+		button {
+			padding: 12px 24px;
+			background: linear-gradient(135deg, #00ff88, #00d4ff);
+			border: none;
+			border-radius: 5px;
+			color: #0a0e27;
+			font-family: 'Orbitron', sans-serif;
+			font-weight: 700;
+			font-size: 14px;
+			cursor: pointer;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+			transition: all 0.3s;
+			position: relative;
+			overflow: hidden;
+			margin: 5px;
+			box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+		}
+		
+		button::before {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 0;
+			height: 0;
+			border-radius: 50%;
+			background: rgba(255, 255, 255, 0.3);
+			transform: translate(-50%, -50%);
+			transition: width 0.6s, height 0.6s;
+		}
+		
+		button:hover::before {
+			width: 300px;
+			height: 300px;
+		}
+		
+		button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 5px 25px rgba(0, 255, 136, 0.6);
+		}
+		
+		button:active {
+			transform: translateY(0);
+		}
+		
+		button.secondary {
+			background: linear-gradient(135deg, #8a2be2, #ff00ff);
+			box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
+		}
+		
+		button.secondary:hover {
+			box-shadow: 0 5px 25px rgba(138, 43, 226, 0.6);
+		}
+		
+		.row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 25px;
+		}
+		
+		@media (max-width: 968px) {
+			.row {
+				grid-template-columns: 1fr;
+			}
+		}
+		
+		#cases {
+			list-style: none;
+			margin-top: 20px;
+		}
+		
+		#cases li {
+			background: rgba(0, 255, 136, 0.1);
+			border: 1px solid #00ff88;
+			border-radius: 5px;
+			padding: 15px;
+			margin-bottom: 15px;
+			transition: all 0.3s;
+		}
+		
+		#cases li:hover {
+			background: rgba(0, 255, 136, 0.2);
+			box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+			transform: translateX(5px);
+		}
+		
+		#cases li strong {
+			color: #00d4ff;
+			font-size: 1.1em;
+			display: block;
+			margin-bottom: 10px;
+		}
+		
+		#cases li em {
+			color: #8a2be2;
+			font-style: normal;
+			font-weight: bold;
+		}
+		
+		pre {
+			background: rgba(0, 0, 0, 0.8);
+			border: 2px solid #00ff88;
+			border-radius: 5px;
+			padding: 20px;
+			overflow: auto;
+			max-height: 400px;
+			color: #00ff88;
+			font-family: 'Share Tech Mono', monospace;
+			font-size: 13px;
+			line-height: 1.6;
+			position: relative;
+		}
+		
+		pre::before {
+			content: '📊';
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			font-size: 1.5em;
+		}
+		
+		code {
+			white-space: pre-wrap;
+			color: #00ff88;
+		}
+		
+		.input-group {
+			display: flex;
+			gap: 10px;
+			align-items: center;
+			margin-bottom: 15px;
+		}
+		
+		.input-group label {
+			margin-bottom: 0;
+			white-space: nowrap;
+		}
+		
+		.input-group input, .input-group select {
+			margin-bottom: 0;
+		}
+		
+		.status-indicator {
+			display: inline-block;
+			width: 12px;
+			height: 12px;
+			border-radius: 50%;
+			background: #00ff88;
+			box-shadow: 0 0 10px #00ff88;
+			animation: blink 2s infinite;
+			margin-left: 10px;
+		}
+		
+		@keyframes blink {
+			0%, 100% { opacity: 1; }
+			50% { opacity: 0.3; }
+		}
+		
+		hr {
+			border: none;
+			height: 2px;
+			background: linear-gradient(90deg, transparent, #00ff88, transparent);
+			margin: 30px 0;
+		}
+		
+		.alert {
+			background: rgba(0, 255, 136, 0.2);
+			border: 2px solid #00ff88;
+			border-radius: 5px;
+			padding: 15px;
+			margin: 15px 0;
+			color: #00ff88;
+			font-weight: bold;
+		}
 	</style>
 	<script>
 		const API_BASE = (location.port && location.port !== '80') ? `http://localhost:8000` : '';
-		async function postJson(url, body) {
-			const res = await fetch(API_BASE + url, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body)
-			});
-			if (!res.ok) throw new Error(await res.text());
-			return res.json();
+		let templates = [];
+		
+		// Загрузка шаблонов при загрузке страницы
+		async function loadTemplates() {
+			try {
+				const res = await fetch(API_BASE + '/templates');
+				const data = await res.json();
+				templates = data.templates || [];
+				const templateSelect = document.getElementById('template');
+				if (templateSelect) {
+					templateSelect.innerHTML = '<option value="">Без шаблона (ручной ввод)</option>';
+					templates.forEach(t => {
+						const option = document.createElement('option');
+						option.value = t.name;
+						option.textContent = `${t.name} - ${t.description}`;
+						templateSelect.appendChild(option);
+					});
+				}
+			} catch (error) {
+				console.error('Ошибка загрузки шаблонов:', error);
+			}
 		}
+		
+		// Обновление параметров шаблона при выборе
+		function updateTemplateParams() {
+			const templateName = document.getElementById('template').value;
+			const paramsDiv = document.getElementById('templateParams');
+			paramsDiv.innerHTML = '';
+			
+			if (!templateName) {
+				return;
+			}
+			
+			const template = templates.find(t => t.name === templateName);
+			if (!template) return;
+			
+			// Параметры для разных шаблонов
+			if (templateName === 'auth') {
+				paramsDiv.innerHTML = `
+					<label>Тип теста:</label>
+					<select id="authType" style="width: 100%; margin-bottom: 10px;">
+						<option value="positive">Позитивный (успешный вход)</option>
+						<option value="negative_password">Негативный (неверный пароль)</option>
+						<option value="negative_validation">Негативный (валидация)</option>
+					</select>
+					<label>URL логина:</label>
+					<input id="authLoginUrl" placeholder="/login" style="width: 100%; margin-bottom: 10px;"/>
+					<label>Email:</label>
+					<input id="authEmail" placeholder="user@example.com" style="width: 100%; margin-bottom: 10px;"/>
+					<label>Пароль:</label>
+					<input id="authPassword" placeholder="Passw0rd!" style="width: 100%; margin-bottom: 10px;"/>
+					<label>URL успеха:</label>
+					<input id="authSuccessUrl" placeholder="/dashboard" style="width: 100%;"/>
+				`;
+			} else if (templateName === 'form') {
+				paramsDiv.innerHTML = `
+					<label>Тип теста:</label>
+					<select id="formType" style="width: 100%; margin-bottom: 10px;">
+						<option value="positive">Позитивный (успешная отправка)</option>
+						<option value="negative">Негативный (валидация)</option>
+					</select>
+					<label>URL формы:</label>
+					<input id="formUrl" placeholder="/form" style="width: 100%; margin-bottom: 10px;"/>
+					<label>Кнопка отправки:</label>
+					<input id="formSubmit" placeholder="Отправить" style="width: 100%;"/>
+				`;
+			} else if (templateName === 'list') {
+				paramsDiv.innerHTML = `
+					<label>Тип теста:</label>
+					<select id="listType" style="width: 100%; margin-bottom: 10px;">
+						<option value="display">Отображение</option>
+						<option value="filter">Фильтрация</option>
+						<option value="sort">Сортировка</option>
+						<option value="pagination">Пагинация</option>
+					</select>
+					<label>URL списка:</label>
+					<input id="listUrl" placeholder="/list" style="width: 100%; margin-bottom: 10px;"/>
+					<label>Количество элементов:</label>
+					<input id="listCount" type="number" value="10" style="width: 100%;"/>
+				`;
+			} else if (templateName === 'crud') {
+				paramsDiv.innerHTML = `
+					<label>Тип операции:</label>
+					<select id="crudType" style="width: 100%; margin-bottom: 10px;">
+						<option value="create">Создание</option>
+						<option value="read">Чтение</option>
+						<option value="update">Обновление</option>
+						<option value="delete">Удаление</option>
+					</select>
+					<label>Название сущности:</label>
+					<input id="crudEntity" placeholder="элемент" style="width: 100%; margin-bottom: 10px;"/>
+					<label>Базовый URL:</label>
+					<input id="crudUrl" placeholder="/items" style="width: 100%;"/>
+				`;
+			}
+		}
+		
+		async function postJson(url, body) {
+			try {
+				const res = await fetch(API_BASE + url, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(body)
+				});
+				if (!res.ok) {
+					let errorText = await res.text();
+					try {
+						const errorJson = JSON.parse(errorText);
+						errorText = errorJson.detail || errorText;
+					} catch (e) {}
+					throw new Error(errorText);
+				}
+				return res.json();
+			} catch (error) {
+				// Не показываем alert здесь, пусть вызывающая функция решает
+				throw error;
+			}
+		}
+		
+		function showAlert(message, type = 'success') {
+			const alert = document.createElement('div');
+			alert.className = 'alert';
+			alert.style.borderColor = type === 'error' ? '#ff0066' : '#00ff88';
+			alert.style.color = type === 'error' ? '#ff0066' : '#00ff88';
+			alert.textContent = message;
+			document.body.insertBefore(alert, document.body.firstChild);
+			setTimeout(() => alert.remove(), 5000);
+		}
+		
 		async function generateCases() {
 			const description = document.getElementById('desc').value.trim();
-			const res = await postJson('/generate/test-cases', { description, lang: 'ru' });
-			const list = document.getElementById('cases');
-			list.innerHTML = '';
-			res.test_cases.forEach((c, i) => {
-				const li = document.createElement('li');
-				li.innerHTML = `<strong>${c.title}</strong><br/>Шаги:<br/>${c.steps.map(s => '- ' + s).join('<br/>')}<br/><em>Ожидаемо:</em> ${c.expected}
-				<br/><button onclick='window.fillCase(${JSON.stringify(c).replaceAll("'", "\\'")})'>Сгенерировать код</button>`;
-				list.appendChild(li);
-			});
+			if (!description) {
+				showAlert('Введите описание фичи', 'error');
+				return;
+			}
+			const provider = document.getElementById('aiProvider').value || null;
+			const model = document.getElementById('aiModel').value.trim() || null;
+			const format = document.getElementById('format').value || 'json';
+			
+			try {
+				const payload = {
+					description,
+					lang: 'ru',
+					format: format
+				};
+				if (provider) payload.ai_provider = provider;
+				if (model) payload.ai_model = model;
+				
+				const res = await postJson('/generate/test-cases', payload);
+				const list = document.getElementById('cases');
+				list.innerHTML = '';
+				
+				if (format === 'markdown' && res.markdown) {
+					const li = document.createElement('li');
+					li.innerHTML = `<pre style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px;">${res.markdown.replace(/\n/g, '<br/>')}</pre>`;
+					list.appendChild(li);
+				} else {
+					res.test_cases.forEach((c, i) => {
+						const li = document.createElement('li');
+						li.innerHTML = `
+							<strong>${c.title}</strong><br/>
+							<span style="color: #00d4ff;">Шаги:</span><br/>
+							${c.steps.map(s => `• ${s}`).join('<br/>')}<br/>
+							<em>Ожидаемо:</em> ${c.expected}
+							<br/><button onclick='window.fillCase(${JSON.stringify(c).replaceAll("'", "\\'")})'>🔧 Сгенерировать код</button>
+						`;
+						list.appendChild(li);
+					});
+				}
+				showAlert(`Сгенерировано ${res.test_cases.length} тест-кейсов`);
+			} catch (error) {
+				console.error(error);
+				showAlert('Ошибка генерации: ' + (error.message || 'Неизвестная ошибка'), 'error');
+			}
 		}
+		
 		window.fillCase = function (c) {
 			document.getElementById('title').value = c.title;
-			document.getElementById('steps').value = c.steps.join('\\n');
+			document.getElementById('steps').value = c.steps.join('\n');
 			document.getElementById('expected').value = c.expected;
 		}
+		
 		async function generateCode() {
-			const test_case = {
-				title: document.getElementById('title').value,
-				steps: document.getElementById('steps').value.split('\\n').filter(Boolean),
-				expected: document.getElementById('expected').value
-			};
+			const templateName = document.getElementById('template').value;
+			let test_case = null;
+			let template_params = null;
+			
+			// Если выбран шаблон, используем его
+			if (templateName) {
+				template_params = {};
+				if (templateName === 'auth') {
+					template_params = {
+						type: document.getElementById('authType').value,
+						login_url: document.getElementById('authLoginUrl').value || '/login',
+						email: document.getElementById('authEmail').value || 'user@example.com',
+						password: document.getElementById('authPassword').value || 'Passw0rd!',
+						success_url: document.getElementById('authSuccessUrl').value || '/dashboard'
+					};
+				} else if (templateName === 'form') {
+					template_params = {
+						type: document.getElementById('formType').value,
+						form_url: document.getElementById('formUrl').value || '/form',
+						submit_button: document.getElementById('formSubmit').value || 'Отправить',
+						fields: [{name: 'поле', value: 'значение', required: true}]
+					};
+				} else if (templateName === 'list') {
+					template_params = {
+						type: document.getElementById('listType').value,
+						list_url: document.getElementById('listUrl').value || '/list',
+						item_count: parseInt(document.getElementById('listCount').value) || 10,
+						filter_value: 'test'
+					};
+				} else if (templateName === 'crud') {
+					template_params = {
+						type: document.getElementById('crudType').value,
+						entity_name: document.getElementById('crudEntity').value || 'элемент',
+						base_url: document.getElementById('crudUrl').value || '/items'
+					};
+				}
+			} else {
+				// Ручной ввод
+				test_case = {
+					title: document.getElementById('title').value,
+					steps: document.getElementById('steps').value.split('\n').filter(Boolean),
+					expected: document.getElementById('expected').value
+				};
+				if (!test_case.title || !test_case.steps.length) {
+					showAlert('Заполните название и шаги тест-кейса или выберите шаблон', 'error');
+					return;
+				}
+			}
+			
 			const language = document.getElementById('lang').value;
 			const base_url = document.getElementById('baseurl').value || null;
-			const res = await postJson('/generate/test-code', { test_case, language, base_url });
-			document.getElementById('code').value = res.code;
+			const provider = document.getElementById('codeAiProvider').value || null;
+			const model = document.getElementById('codeAiModel').value.trim() || null;
+			
+			try {
+				const payload = { language, base_url };
+				if (test_case) payload.test_case = test_case;
+				if (templateName) {
+					payload.template = templateName;
+					payload.template_params = template_params;
+				}
+				if (provider) payload.ai_provider = provider;
+				if (model) payload.ai_model = model;
+				
+				const res = await postJson('/generate/test-code', payload);
+				document.getElementById('code').value = res.code;
+				showAlert('Код успешно сгенерирован и отформатирован');
+			} catch (error) {
+				console.error(error);
+				showAlert('Ошибка генерации кода: ' + (error.message || 'Неизвестная ошибка'), 'error');
+			}
 		}
+		
 		async function reviewCode() {
 			const code = document.getElementById('code').value;
-			const res = await postJson('/review/test', { code });
-			document.getElementById('review').textContent = JSON.stringify(res, null, 2);
+			if (!code.trim()) {
+				showAlert('Введите код для анализа', 'error');
+				return;
+			}
+			try {
+				const res = await postJson('/review/test', { code });
+				document.getElementById('review').textContent = JSON.stringify(res, null, 2);
+				showAlert('Анализ завершен');
+			} catch (error) {
+				console.error(error);
+				showAlert('Ошибка анализа: ' + (error.message || 'Неизвестная ошибка'), 'error');
+			}
 		}
+		
 		async function saveLocal() {
 			const path = document.getElementById('path').value;
 			const content = document.getElementById('code').value;
-			const res = await postJson('/save/local', { relative_path: path, content });
-			alert('Saved: ' + res.path);
+			if (!path || !content) {
+				showAlert('Укажите путь и код для сохранения', 'error');
+				return;
+			}
+			try {
+				const res = await postJson('/save/local', { relative_path: path, content });
+				showAlert('Сохранено: ' + res.path);
+			} catch (error) {
+				console.error(error);
+				showAlert('Ошибка сохранения: ' + (error.message || 'Неизвестная ошибка'), 'error');
+			}
 		}
+		
 		async function genDemo() {
 			const description = document.getElementById('desc').value.trim();
+			if (!description) {
+				showAlert('Введите описание для демо-приложения', 'error');
+				return;
+			}
 			const out_dir = document.getElementById('demoOut').value || 'demo_app';
-			const res = await postJson('/generate/demo-app', { description, out_dir });
-			alert('Demo saved:\n' + res.saved.join('\n'));
+			try {
+				const res = await postJson('/generate/demo-app', { description, out_dir });
+				showAlert('Демо сохранено:\n' + res.saved.join('\n'));
+			} catch (error) {
+				console.error(error);
+				showAlert('Ошибка генерации демо: ' + (error.message || 'Неизвестная ошибка'), 'error');
+			}
 		}
+		
 		async function runTests() {
 			const kind = document.getElementById('kind').value;
-			const res = await postJson('/tests/run', { kind });
-			document.getElementById('review').textContent = JSON.stringify(res, null, 2);
+			try {
+				const res = await postJson('/tests/run', { kind });
+				document.getElementById('review').textContent = JSON.stringify(res, null, 2);
+				showAlert('Тесты выполнены');
+			} catch (error) {
+				console.error(error);
+				showAlert('Ошибка запуска тестов: ' + (error.message || 'Неизвестная ошибка'), 'error');
+			}
 		}
+		
 		async function gitPush() {
 			const message = document.getElementById('gitmsg').value || 'chore: generated files';
-			const res = await postJson('/git/push', { message });
-			alert('Pushed commit: ' + res.commit);
+			try {
+				const res = await postJson('/git/push', { message });
+				showAlert('Коммит отправлен: ' + res.commit);
+			} catch (error) {
+				console.error(error);
+				showAlert('Ошибка git push: ' + (error.message || 'Неизвестная ошибка'), 'error');
+			}
 		}
+		
+		// Загружаем шаблоны при загрузке страницы
+		window.addEventListener('DOMContentLoaded', loadTemplates);
 	</script>
 </head>
 <body>
-	<h1>AI Test Assistant</h1>
-	<h3>Генерация тест-кейсов</h3>
-	<textarea id="desc" placeholder="Опишите фичу..."></textarea><br/>
-	<button onclick="generateCases()">Сгенерировать тест-кейсы</button>
-	<ol id="cases"></ol>
+	<div class="container">
+		<header>
+			<h1>🔒 AI Security Test Assistant</h1>
+			<div class="subtitle">Автоматизированное тестирование безопасности <span class="status-indicator"></span></div>
+		</header>
 
-	<hr/>
-	<h3>Генерация автотеста (Playwright)</h3>
-	<div class="row">
-		<div>
-			<label>Название</label><br/>
-			<input id="title" style="width:100%"/>
-			<br/><label>Шаги (по одному на строке)</label><br/>
-			<textarea id="steps"></textarea>
-			<br/><label>Ожидаемый результат</label><br/>
-			<textarea id="expected" style="height:80px"></textarea>
-			<br/><label>Язык</label>
-			<select id="lang"><option value="ts">TypeScript</option><option value="js">JavaScript</option><option value="python">Python</option></select>
-			<label style="margin-left:12px">Base URL</label> <input id="baseurl" placeholder="http://localhost:3000"/>
-			<br/><button onclick="generateCode()">Сгенерировать код</button>
-			<button onclick="reviewCode()">AI Review</button>
-			<br/><br/>
-			<label>Demo out dir</label> <input id="demoOut" value="demo_app"/>
-			<button onclick="genDemo()">Сгенерировать демо-приложение</button>
-			<br/><br/>
-			<label>Run tests kind</label>
-			<select id="kind"><option value="ts">TS</option><option value="js">JS</option><option value="python">Python</option></select>
-			<button onclick="runTests()">Запустить тесты</button>
-			<br/><br/>
-			<label>Git message</label> <input id="gitmsg" value="chore: generated files" style="width:60%"/>
-			<button onclick="gitPush()">Git push</button>
-		</div>
-		<div>
-			<label>Код</label><br/>
-			<textarea id="code" style="height:340px"></textarea>
-			<br/>
-			<label>Сохранить локально как</label>
-			<input id="path" placeholder="tests/e2e/generated.spec.ts" value="tests/e2e/generated.spec.ts" style="width:60%"/>
-			<button onclick="saveLocal()">Сохранить</button>
-		</div>
+		<section>
+			<h2>🛡️ Генерация тест-кейсов безопасности</h2>
+			
+			<div class="input-group" style="margin-bottom: 15px;">
+				<label style="margin-right: 15px;">Провайдер ИИ:</label>
+				<select id="aiProvider" style="width: auto; margin-right: 20px;">
+					<option value="">По умолчанию (из env)</option>
+					<option value="openai">OpenAI</option>
+					<option value="ollama">Ollama</option>
+				</select>
+				
+				<label style="margin-right: 10px;">Модель:</label>
+				<input id="aiModel" placeholder="gpt-4o-mini или qwen2.5:7b-instruct" style="flex: 1; max-width: 300px;"/>
+			</div>
+			
+			<div class="input-group" style="margin-bottom: 15px;">
+				<label style="margin-right: 15px;">Формат:</label>
+				<select id="format" style="width: auto;">
+					<option value="json">JSON</option>
+					<option value="markdown">Markdown</option>
+				</select>
+			</div>
+			
+			<label>Описание функциональности для тестирования:</label>
+			<textarea id="desc" placeholder="Опишите фичу или уязвимость для тестирования..."></textarea>
+			<button onclick="generateCases()">⚡ Сгенерировать тест-кейсы</button>
+			<ol id="cases"></ol>
+		</section>
+
+		<hr/>
+
+		<section>
+			<h2>🔧 Генерация автотеста (Playwright)</h2>
+			<div class="row">
+				<div>
+					<label>Название теста</label>
+					<input id="title" placeholder="Например: Проверка авторизации"/>
+					
+					<label>Шаги тестирования (по одному на строке)</label>
+					<textarea id="steps" placeholder="1. Открыть страницу логина&#10;2. Ввести учетные данные&#10;3. Нажать кнопку входа"></textarea>
+					
+					<label>Ожидаемый результат</label>
+					<textarea id="expected" style="height:80px" placeholder="Успешная авторизация и редирект на главную страницу"></textarea>
+					
+					<div class="input-group" style="margin-bottom: 15px;">
+						<label style="margin-right: 15px;">Шаблон:</label>
+						<select id="template" onchange="updateTemplateParams()" style="flex: 1;">
+							<option value="">Загрузка...</option>
+						</select>
+					</div>
+					
+					<div id="templateParams" style="margin-bottom: 15px; padding: 15px; background: rgba(0,255,136,0.1); border: 1px solid #00ff88; border-radius: 5px;"></div>
+					
+					<div class="input-group">
+						<label>Язык:</label>
+						<select id="lang">
+							<option value="ts">TypeScript</option>
+							<option value="js">JavaScript</option>
+							<option value="python">Python</option>
+						</select>
+					</div>
+					
+					<div class="input-group">
+						<label>Base URL:</label>
+						<input id="baseurl" placeholder="http://localhost:3000" style="flex: 1;"/>
+					</div>
+					
+					<div class="input-group" style="margin-bottom: 15px;">
+						<label style="margin-right: 15px;">Провайдер ИИ:</label>
+						<select id="codeAiProvider" style="width: auto; margin-right: 20px;">
+							<option value="">По умолчанию (из env)</option>
+							<option value="openai">OpenAI</option>
+							<option value="ollama">Ollama</option>
+						</select>
+						
+						<label style="margin-right: 10px;">Модель:</label>
+						<input id="codeAiModel" placeholder="gpt-4o-mini или qwen2.5:7b-instruct" style="flex: 1; max-width: 300px;"/>
+					</div>
+					
+					<button onclick="generateCode()">⚡ Сгенерировать код</button>
+					<button class="secondary" onclick="reviewCode()">🔍 AI Анализ кода</button>
+					
+					<br/><br/>
+					
+					<div class="input-group">
+						<label>Demo out dir:</label>
+						<input id="demoOut" value="demo_app" style="flex: 1;"/>
+					</div>
+					<button onclick="genDemo()">🎨 Сгенерировать демо-приложение</button>
+					
+					<br/><br/>
+					
+					<div class="input-group">
+						<label>Run tests kind:</label>
+						<select id="kind">
+							<option value="ts">TypeScript</option>
+							<option value="js">JavaScript</option>
+							<option value="python">Python</option>
+						</select>
+					</div>
+					<button onclick="runTests()">▶️ Запустить тесты</button>
+					
+					<br/><br/>
+					
+					<div class="input-group">
+						<label>Git message:</label>
+						<input id="gitmsg" value="chore: generated files" style="flex: 1;"/>
+					</div>
+					<button onclick="gitPush()">📤 Git push</button>
+				</div>
+				
+				<div>
+					<label>Сгенерированный код</label>
+					<textarea id="code" style="height:400px; font-family: 'Share Tech Mono', monospace;" placeholder="Сгенерированный код появится здесь..."></textarea>
+					
+					<br/>
+					
+					<div class="input-group">
+						<label>Сохранить локально как:</label>
+						<input id="path" placeholder="tests/e2e/generated.spec.ts" value="tests/e2e/generated.spec.ts" style="flex: 1;"/>
+					</div>
+					<button onclick="saveLocal()">💾 Сохранить</button>
+				</div>
+			</div>
+		</section>
+
+		<section>
+			<h2>📊 AI Review результат</h2>
+			<pre><code id="review">Результаты анализа появятся здесь...</code></pre>
+		</section>
 	</div>
-
-	<h3>AI Review результат</h3>
-	<pre><code id="review"></code></pre>
 </body>
 </html>
-
-

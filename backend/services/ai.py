@@ -8,17 +8,23 @@ from backend.services.schemas import TestCase, ReviewTestResponse, ReviewSuggest
 
 
 class AIClient:
-	def __init__(self) -> None:
+	def __init__(self, provider: str | None = None, model: str | None = None) -> None:
 		self.settings = get_settings()
-		self.provider = (self.settings.ai_provider or "openai").lower()
+		self.provider = (provider or self.settings.ai_provider or "openai").lower()
 		self.base_url = self.settings.openai_base_url or "https://api.openai.com/v1"
 		self.api_key = self.settings.openai_api_key
-		self.model = self.settings.openai_model
+		# Переопределение модели в зависимости от провайдера
+		if model:
+			self.model = model
+		elif self.provider == "ollama":
+			self.model = self.settings.ollama_model
+		else:
+			self.model = self.settings.openai_model
 
 	def _headers(self) -> dict:
 		if self.provider == "openai":
 			if not self.api_key:
-				raise RuntimeError("OPENAI_API_KEY is not configured")
+				raise ValueError("OPENAI_API_KEY is not configured. Установите переменную окружения или выберите Ollama.")
 			return {
 				"Authorization": f"Bearer {self.api_key}",
 				"Content-Type": "application/json",
@@ -65,10 +71,42 @@ class AIClient:
 			return str(data)
 
 	async def generate_test_cases(self, description: str, lang: str = "ru", want_markdown: bool = False) -> tuple[list[TestCase], str | None]:
+		examples = {
+			"ru": {
+				"positive": {
+					"title": "Успешная авторизация с валидными данными",
+					"steps": ["Открыть страницу /login", "Ввести email: user@example.com", "Ввести пароль: Passw0rd!", "Нажать кнопку 'Войти'"],
+					"expected": "Редирект на /dashboard, отображается приветственное сообщение"
+				},
+				"negative": {
+					"title": "Попытка входа с неверным паролем",
+					"steps": ["Открыть страницу /login", "Ввести email: user@example.com", "Ввести пароль: wrongpass", "Нажать кнопку 'Войти'"],
+					"expected": "Отображается ошибка 'Неверные учетные данные', пользователь остается на странице логина"
+				}
+			},
+			"en": {
+				"positive": {
+					"title": "Successful login with valid credentials",
+					"steps": ["Open /login page", "Enter email: user@example.com", "Enter password: Passw0rd!", "Click 'Login' button"],
+					"expected": "Redirect to /dashboard, welcome message is displayed"
+				},
+				"negative": {
+					"title": "Login attempt with invalid password",
+					"steps": ["Open /login page", "Enter email: user@example.com", "Enter password: wrongpass", "Click 'Login' button"],
+					"expected": "Error message 'Invalid credentials' is displayed, user remains on login page"
+				}
+			}
+		}
+		
+		ex = examples.get(lang, examples["ru"])
 		system = (
-			"Ты — помощник тестировщика. На основе описания фичи сгенерируй 1-3 тест-кейса. "
-			"Формат JSON: {\"test_cases\":[{\"title\":\"...\",\"steps\":[\"...\"],\"expected\":\"...\"}]}. "
-			"Язык: " + lang
+			f"Ты — эксперт по тестированию безопасности. На основе описания фичи сгенерируй 1-5 тест-кейсов, включая позитивные и негативные сценарии. "
+			f"Формат JSON: {{\"test_cases\":[{{\"title\":\"...\",\"steps\":[\"...\"],\"expected\":\"...\"}}]}}. "
+			f"Язык: {lang}. "
+			f"Примеры:\n"
+			f"Позитивный: {json.dumps(ex['positive'], ensure_ascii=False)}\n"
+			f"Негативный: {json.dumps(ex['negative'], ensure_ascii=False)}\n"
+			f"Важно: шаги должны быть конкретными и проверяемыми, ожидаемый результат — четким."
 		)
 		user = f"Описание фичи:\n{description}"
 		content = await self._chat(
@@ -96,11 +134,48 @@ class AIClient:
 
 	async def generate_playwright_code(self, test_case: TestCase, language: str = "ts", base_url: str | None = None) -> str:
 		lang_name = "TypeScript" if language == "ts" else "JavaScript"
+		
+		# Few-shot примеры для стабильных локаторов
+		example_ts = """import { test, expect } from '@playwright/test';
+
+test('Успешная авторизация', async ({ page }) => {
+  // Используй стабильные локаторы: data-testid, role, или getByText/getByLabel
+  await page.goto('/login');
+  
+  // Предпочтительно: data-testid или role-based локаторы
+  await page.getByTestId('email-input').fill('user@example.com');
+  await page.getByTestId('password-input').fill('Passw0rd!');
+  await page.getByRole('button', { name: 'Войти' }).click();
+  
+  // Всегда добавляй ожидания перед проверками
+  await expect(page).toHaveURL(/.*dashboard/);
+  await expect(page.getByText('Добро пожаловать')).toBeVisible();
+});"""
+		
+		example_js = """const { test, expect } = require('@playwright/test');
+
+test('Успешная авторизация', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByTestId('email-input').fill('user@example.com');
+  await page.getByTestId('password-input').fill('Passw0rd!');
+  await page.getByRole('button', { name: 'Войти' }).click();
+  await expect(page).toHaveURL(/.*dashboard/);
+  await expect(page.getByText('Добро пожаловать')).toBeVisible();
+});"""
+		
+		example_code = example_ts if language == "ts" else example_js
+		
 		system = (
 			f"Сгенерируй {lang_name} тест на Playwright для браузера. "
-			"Используй @playwright/test. Импортируй { test, expect }. "
-			"Добавь стабильные локаторы, ожидания и проверку ожидаемого результата. "
-			"Если указан base_url, используй относительные пути."
+			f"Используй @playwright/test. Импортируй {{ test, expect }}. "
+			f"КРИТИЧЕСКИ ВАЖНО:\n"
+			f"1. Используй стабильные локаторы: getByTestId, getByRole, getByLabel, getByText (избегай CSS/XPath селекторов)\n"
+			f"2. Всегда добавляй ожидания (await expect) перед проверками элементов\n"
+			f"3. Используй waitFor для динамических элементов\n"
+			f"4. Для навигации используй page.goto() с base_url если указан\n"
+			f"5. Проверяй негативные сценарии (ошибки, валидация)\n"
+			f"Пример хорошего теста:\n{example_code}\n"
+			f"Если указан base_url, используй его в page.goto()."
 		)
 		user = json.dumps(
 			{
@@ -120,11 +195,33 @@ class AIClient:
 		return code.strip()
 
 	async def generate_playwright_python_code(self, test_case: TestCase, base_url: str | None = None) -> str:
+		example_py = """import pytest
+from playwright.sync_api import Page, expect
+
+def test_successful_login(page: Page):
+    # Используй стабильные локаторы: data-testid, role, или get_by_text/get_by_label
+    page.goto('/login')
+    
+    # Предпочтительно: data-testid или role-based локаторы
+    page.get_by_test_id('email-input').fill('user@example.com')
+    page.get_by_test_id('password-input').fill('Passw0rd!')
+    page.get_by_role('button', name='Войти').click()
+    
+    # Всегда добавляй ожидания перед проверками
+    expect(page).to_have_url(r'.*dashboard')
+    expect(page.get_by_text('Добро пожаловать')).to_be_visible()"""
+		
 		system = (
 			"Сгенерируй Python тест на Playwright (pytest + playwright). "
 			"Импортируй pytest и используй фикстуру page. "
-			"Добавь стабильные локаторы, ожидания и проверку ожидаемого результата. "
-			"Если указан base_url, используй относительные пути."
+			"КРИТИЧЕСКИ ВАЖНО:\n"
+			"1. Используй стабильные локаторы: get_by_test_id, get_by_role, get_by_label, get_by_text (избегай CSS/XPath селекторов)\n"
+			"2. Всегда добавляй ожидания (expect) перед проверками элементов\n"
+			"3. Используй wait_for для динамических элементов\n"
+			"4. Для навигации используй page.goto() с base_url если указан\n"
+			"5. Проверяй негативные сценарии (ошибки, валидация)\n"
+			f"Пример хорошего теста:\n{example_py}\n"
+			"Если указан base_url, используй его в page.goto()."
 		)
 		user = json.dumps(
 			{
