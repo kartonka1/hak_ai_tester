@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<title>AI Test Assistant</title>
+	<style>
+		body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 20px; }
+		textarea { width: 100%; height: 140px; }
+		pre { background: #f6f8fa; padding: 12px; overflow: auto; }
+		code { white-space: pre-wrap; }
+		.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+		button { padding: 8px 12px; }
+	</style>
+	<script>
+		const API_BASE = (location.port && location.port !== '80') ? `http://localhost:8000` : '';
+		async function postJson(url, body) {
+			const res = await fetch(API_BASE + url, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(body)
+			});
+			if (!res.ok) throw new Error(await res.text());
+			return res.json();
+		}
+		async function generateCases() {
+			const description = document.getElementById('desc').value.trim();
+			const res = await postJson('/generate/test-cases', { description, lang: 'ru' });
+			const list = document.getElementById('cases');
+			list.innerHTML = '';
+			res.test_cases.forEach((c, i) => {
+				const li = document.createElement('li');
+				li.innerHTML = `<strong>${c.title}</strong><br/>Шаги:<br/>${c.steps.map(s => '- ' + s).join('<br/>')}<br/><em>Ожидаемо:</em> ${c.expected}
+				<br/><button onclick='window.fillCase(${JSON.stringify(c).replaceAll("'", "\\'")})'>Сгенерировать код</button>`;
+				list.appendChild(li);
+			});
+		}
+		window.fillCase = function (c) {
+			document.getElementById('title').value = c.title;
+			document.getElementById('steps').value = c.steps.join('\\n');
+			document.getElementById('expected').value = c.expected;
+		}
+		async function generateCode() {
+			const test_case = {
+				title: document.getElementById('title').value,
+				steps: document.getElementById('steps').value.split('\\n').filter(Boolean),
+				expected: document.getElementById('expected').value
+			};
+			const language = document.getElementById('lang').value;
+			const base_url = document.getElementById('baseurl').value || null;
+			const res = await postJson('/generate/test-code', { test_case, language, base_url });
+			document.getElementById('code').value = res.code;
+		}
+		async function reviewCode() {
+			const code = document.getElementById('code').value;
+			const res = await postJson('/review/test', { code });
+			document.getElementById('review').textContent = JSON.stringify(res, null, 2);
+		}
+		async function saveLocal() {
+			const path = document.getElementById('path').value;
+			const content = document.getElementById('code').value;
+			const res = await postJson('/save/local', { relative_path: path, content });
+			alert('Saved: ' + res.path);
+		}
+		async function genDemo() {
+			const description = document.getElementById('desc').value.trim();
+			const out_dir = document.getElementById('demoOut').value || 'demo_app';
+			const res = await postJson('/generate/demo-app', { description, out_dir });
+			alert('Demo saved:\n' + res.saved.join('\n'));
+		}
+		async function runTests() {
+			const kind = document.getElementById('kind').value;
+			const res = await postJson('/tests/run', { kind });
+			document.getElementById('review').textContent = JSON.stringify(res, null, 2);
+		}
+		async function gitPush() {
+			const message = document.getElementById('gitmsg').value || 'chore: generated files';
+			const res = await postJson('/git/push', { message });
+			alert('Pushed commit: ' + res.commit);
+		}
+	</script>
+</head>
+<body>
+	<h1>AI Test Assistant</h1>
+	<h3>Генерация тест-кейсов</h3>
+	<textarea id="desc" placeholder="Опишите фичу..."></textarea><br/>
+	<button onclick="generateCases()">Сгенерировать тест-кейсы</button>
+	<ol id="cases"></ol>
+
+	<hr/>
+	<h3>Генерация автотеста (Playwright)</h3>
+	<div class="row">
+		<div>
+			<label>Название</label><br/>
+			<input id="title" style="width:100%"/>
+			<br/><label>Шаги (по одному на строке)</label><br/>
+			<textarea id="steps"></textarea>
+			<br/><label>Ожидаемый результат</label><br/>
+			<textarea id="expected" style="height:80px"></textarea>
+			<br/><label>Язык</label>
+			<select id="lang"><option value="ts">TypeScript</option><option value="js">JavaScript</option><option value="python">Python</option></select>
+			<label style="margin-left:12px">Base URL</label> <input id="baseurl" placeholder="http://localhost:3000"/>
+			<br/><button onclick="generateCode()">Сгенерировать код</button>
+			<button onclick="reviewCode()">AI Review</button>
+			<br/><br/>
+			<label>Demo out dir</label> <input id="demoOut" value="demo_app"/>
+			<button onclick="genDemo()">Сгенерировать демо-приложение</button>
+			<br/><br/>
+			<label>Run tests kind</label>
+			<select id="kind"><option value="ts">TS</option><option value="js">JS</option><option value="python">Python</option></select>
+			<button onclick="runTests()">Запустить тесты</button>
+			<br/><br/>
+			<label>Git message</label> <input id="gitmsg" value="chore: generated files" style="width:60%"/>
+			<button onclick="gitPush()">Git push</button>
+		</div>
+		<div>
+			<label>Код</label><br/>
+			<textarea id="code" style="height:340px"></textarea>
+			<br/>
+			<label>Сохранить локально как</label>
+			<input id="path" placeholder="tests/e2e/generated.spec.ts" value="tests/e2e/generated.spec.ts" style="width:60%"/>
+			<button onclick="saveLocal()">Сохранить</button>
+		</div>
+	</div>
+
+	<h3>AI Review результат</h3>
+	<pre><code id="review"></code></pre>
+</body>
+</html>
+
+

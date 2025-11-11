@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<title>Demo Login</title>
+	<style>
+		body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 40px; }
+		.container { max-width: 420px; margin: 0 auto; }
+		label { display: block; margin: 12px 0 4px; }
+		input { width: 100%; padding: 10px 12px; box-sizing: border-box; }
+		button { margin-top: 16px; padding: 10px 14px; }
+		.error { color: #c00; margin-top: 8px; }
+	</style>
+	<script>
+		function onSubmit(event) {
+			event.preventDefault();
+			const email = document.getElementById('email').value.trim();
+			const pass = document.getElementById('password').value.trim();
+			const error = document.getElementById('error');
+			error.textContent = '';
+			if (!email) { error.textContent = 'Email обязателен'; return; }
+			if (!pass) { error.textContent = 'Пароль обязателен'; return; }
+			// Простая проверка формата email
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			if (!emailRegex.test(email)) { error.textContent = 'Неверный формат email'; return; }
+			// Демонстрационная проверка учетных данных
+			const validEmail = 'user@example.com';
+			const validPass = 'Passw0rd!';
+			if (email !== validEmail || pass !== validPass) { error.textContent = 'Неверные учетные данные'; return; }
+			// Успешный "логин" — в демо просто редиректим
+			location.href = 'dashboard.html';
+		}
+	</script>
+	</head>
+<body>
+	<div class="container">
+		<h1>Вход</h1>
+		<form id="login-form" onsubmit="onSubmit(event)">
+			<label for="email">Email</label>
+			<input id="email" name="email" type="email" placeholder="user@example.com" />
+			<label for="password">Пароль</label>
+			<input id="password" name="password" type="password" placeholder="Passw0rd!" />
+			<button type="submit">Войти</button>
+			<div id="error" class="error" role="alert"></div>
+		</form>
+	</div>
+</body>
+</html>
+
+
