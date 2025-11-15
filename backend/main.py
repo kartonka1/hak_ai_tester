@@ -74,10 +74,13 @@ def get_templates():
 @app.post("/generate/test-cases", response_model=GenerateTestCasesResponse)
 async def generate_test_cases(payload: GenerateTestCasesRequest):
     try:
+        print(f"[DEBUG] Получен запрос на генерацию тест-кейсов: provider={payload.ai_provider}, model={payload.ai_model}")
         ai = AIClient(provider=payload.ai_provider, model=payload.ai_model)
+        print(f"[DEBUG] AIClient создан, начинаю генерацию...")
         cases, md = await ai.generate_test_cases(
             payload.description, payload.lang or "ru", want_markdown=(payload.format == "markdown")
         )
+        print(f"[DEBUG] Генерация завершена, получено {len(cases)} тест-кейсов")
         return GenerateTestCasesResponse(test_cases=cases, markdown=md)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))

@@ -355,7 +355,12 @@
 		}
 	</style>
 	<script>
-		const API_BASE = (location.port && location.port !== '80') ? `http://localhost:8000` : '';
+		// Автоматически определяем API_BASE на основе текущего хоста
+		const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') 
+			? `${location.protocol}//${location.hostname}:8000` 
+			: (location.port && location.port !== '80') ? `${location.protocol}//${location.hostname}:8000` : '';
+		console.log('API_BASE установлен:', API_BASE);
+		console.log('Текущий URL:', location.href);
 		let templates = [];
 		
 		// Загрузка шаблонов при загрузке страницы
@@ -454,22 +459,41 @@
 		}
 		
 		async function postJson(url, body) {
+			const fullUrl = API_BASE + url;
+			console.log('POST запрос:', fullUrl, body);
 			try {
-				const res = await fetch(API_BASE + url, {
+				// Увеличиваем таймаут для запросов к Ollama (до 2 минут)
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 минуты
+				
+				const res = await fetch(fullUrl, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(body)
+					body: JSON.stringify(body),
+					signal: controller.signal
 				});
+				clearTimeout(timeoutId);
+				console.log('Статус ответа:', res.status, res.statusText);
 				if (!res.ok) {
 					let errorText = await res.text();
+					console.error('Ошибка ответа:', errorText);
 					try {
 						const errorJson = JSON.parse(errorText);
 						errorText = errorJson.detail || errorText;
 					} catch (e) {}
 					throw new Error(errorText);
 				}
-				return res.json();
+				const data = await res.json();
+				console.log('Успешный ответ:', data);
+				return data;
 			} catch (error) {
+				console.error('Ошибка fetch:', error);
+				if (error.name === 'AbortError') {
+					throw new Error('Запрос превысил время ожидания (2 минуты). Попробуйте еще раз или используйте более простой запрос.');
+				}
+				if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+					throw new Error('Не удалось подключиться к серверу. Убедитесь, что сервер запущен на http://127.0.0.1:8000');
+				}
 				// Не показываем alert здесь, пусть вызывающая функция решает
 				throw error;
 			}
@@ -486,6 +510,7 @@
 		}
 		
 		async function generateCases() {
+			console.log('generateCases вызвана');
 			const description = document.getElementById('desc').value.trim();
 			if (!description) {
 				showAlert('Введите описание фичи', 'error');
@@ -494,6 +519,9 @@
 			const provider = document.getElementById('aiProvider').value || null;
 			const model = document.getElementById('aiModel').value.trim() || null;
 			const format = document.getElementById('format').value || 'json';
+			
+			console.log('API_BASE:', API_BASE);
+			console.log('Provider:', provider, 'Model:', model);
 			
 			try {
 				const payload = {
@@ -504,7 +532,10 @@
 				if (provider) payload.ai_provider = provider;
 				if (model) payload.ai_model = model;
 				
+				console.log('Отправка запроса:', payload);
+				showAlert('Генерация тест-кейсов... Это может занять 30-60 секунд для Ollama', 'success');
 				const res = await postJson('/generate/test-cases', payload);
+				console.log('Получен ответ:', res);
 				const list = document.getElementById('cases');
 				list.innerHTML = '';
 				
@@ -706,7 +737,7 @@
 				</select>
 				
 				<label style="margin-right: 10px;">Модель:</label>
-				<input id="aiModel" placeholder="gpt-4o-mini или qwen2.5:7b-instruct" style="flex: 1; max-width: 300px;"/>
+				<input id="aiModel" placeholder="gpt-4o-mini или llama3" style="flex: 1; max-width: 300px;"/>
 			</div>
 			
 			<div class="input-group" style="margin-bottom: 15px;">
@@ -770,7 +801,7 @@
 						</select>
 						
 						<label style="margin-right: 10px;">Модель:</label>
-						<input id="codeAiModel" placeholder="gpt-4o-mini или qwen2.5:7b-instruct" style="flex: 1; max-width: 300px;"/>
+						<input id="codeAiModel" placeholder="gpt-4o-mini или llama3" style="flex: 1; max-width: 300px;"/>
 					</div>
 					
 					<button onclick="generateCode()">⚡ Сгенерировать код</button>

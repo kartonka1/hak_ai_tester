@@ -15,9 +15,11 @@ def main():
 	parser.add_argument("--format", type=str, default="json", choices=["json", "markdown"], help="Формат тест-кейсов")
 	parser.add_argument("--target", type=str, default="python", choices=["python", "ts", "js"], help="Цель генерации автотеста")
 	parser.add_argument("--push", action="store_true", help="Сделать git commit и push")
+	parser.add_argument("--ai-provider", type=str, choices=["openai", "ollama"], help="Провайдер ИИ. По умолчанию берется из окружения.")
+	parser.add_argument("--ai-model", type=str, help="Модель ИИ. По умолчанию берется из окружения.")
 	args = parser.parse_args()
 
-	ai = AIClient()
+	ai = AIClient(provider=args.ai_provider, model=args.ai_model)
 	storage = LocalStorage()
 
 	# 1) Test cases

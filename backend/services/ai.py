@@ -11,7 +11,11 @@ class AIClient:
 	def __init__(self, provider: str | None = None, model: str | None = None) -> None:
 		self.settings = get_settings()
 		self.provider = (provider or self.settings.ai_provider or "openai").lower()
+		if self.provider not in {"openai", "ollama"}:
+			raise ValueError(f"Unsupported AI provider '{self.provider}'. Используйте 'openai' или 'ollama'.")
 		self.base_url = self.settings.openai_base_url or "https://api.openai.com/v1"
+		# Ollama не требует ключа, но нуждается в корректном базовом URL
+		self.ollama_base_url = (self.settings.ollama_base_url or "http://localhost:11434").rstrip("/")
 		self.api_key = self.settings.openai_api_key
 		# Переопределение модели в зависимости от провайдера
 		if model:
@@ -48,8 +52,8 @@ class AIClient:
 				data = resp.json()
 				return data["choices"][0]["message"]["content"]
 		# Ollama chat
-		model = self.settings.ollama_model
-		base = self.settings.ollama_base_url.rstrip("/")
+		model = self.model or self.settings.ollama_model
+		base = self.ollama_base_url
 		ollama_payload = {
 			"model": model,
 			"messages": messages,
@@ -58,10 +62,15 @@ class AIClient:
 			},
 			"stream": False,
 		}
+		if response_format == "json":
+			ollama_payload["format"] = "json"
+		print(f"[DEBUG] Отправка запроса к Ollama: {base}/api/chat, model={model}")
 		async with httpx.AsyncClient(timeout=120.0) as client:
 			resp = await client.post(f"{base}/api/chat", headers=self._headers(), json=ollama_payload)
+			print(f"[DEBUG] Ответ от Ollama получен, статус: {resp.status_code}")
 			resp.raise_for_status()
 			data = resp.json()
+			print(f"[DEBUG] Данные от Ollama распарсены")
 			# Ollama returns {"message":{"role":"assistant","content":"..."}}
 			if "message" in data and "content" in data["message"]:
 				return data["message"]["content"]
